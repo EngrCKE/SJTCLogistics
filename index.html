@@ -362,12 +362,12 @@ function applyFilters(list){
     if(dr!=="ALL" && r.DriverCode!==dr) return false;
     if(ve!=="ALL" && r.VehicleCode!==ve) return false;
 
-    if(sf==="SCHEDULED_OR_CONFIRMED"){
-      if(!(r.Scheduled || r.Status==="CONFIRMED")) return false;
-    } else if (sf==="UNSCHEDULED"){
-      if(r.Scheduled) return false;
-      if(r.Status==="CANCELLED") return false;
-    }
+if(sf === "SCHEDULED_OR_CONFIRMED"){
+  if(!(isScheduled(r) || r.Status==="CONFIRMED")) return false;
+} else if (sf === "UNSCHEDULED"){
+  if(isScheduled(r)) return false;
+  if(r.Status==="CANCELLED") return false;
+}
     if(!matchesSearch(r,q)) return false;
     return true;
   });
@@ -562,7 +562,7 @@ function renderAllRequests(){
    ========================= */
 function renderRoutes(){
   const wrap = $("viewRoutes");
-  const filtered = applyFilters(requests).filter(r => r.Scheduled && r.Status!=="CANCELLED");
+  const filtered = applyFilters(requests).filter(r => isScheduled(r) && r.Status !== "CANCELLED");
 
   // group: dateKey|vehicle
   const groups = {};
@@ -1163,4 +1163,5 @@ init().catch(e=> alert(e.message || e));
 </body>
 
 </html>
+
 
