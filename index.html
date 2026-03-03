@@ -205,7 +205,6 @@
       <button id="btnClose">Close</button>
       <button class="primary" id="btnDuplicate">Duplicate</button>
       <button class="danger" id="btnCancelReq">Cancel Request</button>
-      <button class="primary" id="btnApprove">Set APPROVED</button>
       <button class="ok" id="btnConfirm">Set CONFIRMED</button>
       <button class="ok" id="btnSave">Save / Create</button>
     </div>
@@ -813,7 +812,6 @@ function openModal(requestId){
   $("modalMineBadge").style.display = (currentRequest && mine) ? "" : "none";
 
   // permissions
-  $("btnApprove").disabled = !isManager;
   $("btnConfirm").disabled = !isManager;
   $("fDriver").disabled = !isManager;
   $("fVehicle").disabled = !isManager;
@@ -943,15 +941,38 @@ $("btnSave").addEventListener("click", async ()=>{
   await loadWindow();
 });
 
-$("btnApprove").addEventListener("click", async ()=>{
-  if(!currentRequest) return;
-  await api("setStatus", { pin:getPin(), requestId: currentRequest.RequestID, status:"APPROVED", note:$("fDecisionNote").value.trim() });
-  closeModal(); await loadWindow();
-});
 $("btnConfirm").addEventListener("click", async ()=>{
   if(!currentRequest) return;
-  await api("setStatus", { pin:getPin(), requestId: currentRequest.RequestID, status:"CONFIRMED", note:$("fDecisionNote").value.trim() });
-  closeModal(); await loadWindow();
+  if(!BOOT.canManage) return alert("Manager PIN required.");
+
+  // 1) save allocation first (this is what sets Scheduled=TRUE)
+  const DriverCode = $("fDriver").value;
+  const VehicleCode = $("fVehicle").value;
+
+  if(!DriverCode || !VehicleCode){
+    return alert("To CONFIRM, assign BOTH Driver and Vehicle (this will schedule it).");
+  }
+
+  const alloc = await api("updateAllocation", {
+    pin: getPin(),
+    requestId: currentRequest.RequestID,
+    DriverCode,
+    VehicleCode
+  });
+
+  // show warning list if any
+  showWarnings(alloc.warnings || []);
+
+  // 2) then set confirmed
+  await api("setStatus", {
+    pin: getPin(),
+    requestId: currentRequest.RequestID,
+    status: "CONFIRMED",
+    note: $("fDecisionNote").value.trim()
+  });
+
+  closeModal();
+  await loadWindow();
 });
 
 $("btnCancelReq").addEventListener("click", async ()=>{
@@ -1136,4 +1157,5 @@ init().catch(e=> alert(e.message || e));
 
 </script>
 </body>
+
 </html>
