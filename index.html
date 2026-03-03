@@ -5,16 +5,22 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SJTC Logistics Planning App V1 (GitHub)</title>
   <style>
-    :root{
-      --bg:#0b1f16;
-      --panel:#0f2a1f;
-      --txt:#f3f1e8;
-      --muted:#c8c1ad;
-      --accent:#7fd3a6;
-      --ok:#35d07f;
-      --bad:#ff6b6b;
-      --warn:#ffd27a;
-    }
+:root {
+  --bg:#0f2e22;               /* deep green background */
+  --panel:#163b2c;            /* slightly lighter green */
+  --panel-soft:#1b4a37;
+
+  --txt:#f4f1e8;              /* warm off-white text */
+  --muted:#cfc8b8;
+
+  --accent:#3fae73;           /* green accent */
+  --ok:#35d07f;
+  --bad:#d96c6c;
+  --warn:#d4a95c;
+
+  --beige:#f3e9d7;            /* textbox background */
+  --beige-border:#d9cbb2;
+}
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:radial-gradient(1200px 700px at 20% 10%, #123826 0%, var(--bg) 60%);color:var(--txt)}
     header{position:sticky;top:0;z-index:10;background:rgba(11,31,22,.88);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08);padding:12px}
@@ -22,12 +28,54 @@
     .title{font-weight:900}
     .badge{font-size:12px;color:var(--muted);padding:4px 8px;border:1px solid rgba(255,255,255,.14);border-radius:999px}
     .spacer{flex:1}
-    button,select,input,textarea{background:rgba(243,241,232,.08);color:var(--txt);border:1px solid rgba(243,241,232,.18);border-radius:10px;padding:9px 10px;font:inherit;outline:none}
-    button{cursor:pointer}
-    button.primary{background:rgba(127,211,166,.16);border-color:rgba(127,211,166,.45)}
-    button.ok{background:rgba(53,208,127,.14);border-color:rgba(53,208,127,.45)}
-    button.danger{background:rgba(255,107,107,.14);border-color:rgba(255,107,107,.45)}
-    button:disabled{opacity:.55;cursor:not-allowed}
+   button,select,input,textarea{
+  border-radius:10px;
+  padding:10px 12px;
+  font:inherit;
+  outline:none;
+}
+
+input, select, textarea {
+  background: var(--beige);
+  color: #2e2a22; /* dark brown text for contrast */
+  border: 1px solid var(--beige-border);
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(63,174,115,.25);
+}
+button {
+  background: var(--panel-soft);
+  color: var(--txt);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+button.primary {
+  background: var(--accent);
+  color: #ffffff;
+  border: none;
+}
+
+button.ok {
+  background: #2f8f5f;
+  color: white;
+  border: none;
+}
+
+button.danger {
+  background: #b84c4c;
+  color: white;
+  border: none;
+}
+
+button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
     main{padding:14px;max-width:1300px;margin:0 auto}
     .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
     .tab{padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(243,241,232,.06);cursor:pointer}
@@ -1163,5 +1211,6 @@ init().catch(e=> alert(e.message || e));
 </body>
 
 </html>
+
 
 
