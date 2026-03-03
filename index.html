@@ -384,9 +384,13 @@ function pillForStatus(s){
   if(s==="PENDING") return `<span class="pill">PENDING</span>`;
   return `<span class="pill bad">CANCELLED</span>`;
 }
+function isScheduled(r){
+  // Scheduled means: assigned driver AND vehicle, and not cancelled
+  return (r.Status !== "CANCELLED") && !!(r.DriverCode && r.VehicleCode);
+}
 function pillForScheduled(r){
   if(r.Status==="CANCELLED") return `<span class="pill bad">CANCELLED</span>`;
-  if(r.Scheduled) return `<span class="pill info">SCHEDULED</span>`;
+  if(isScheduled(r)) return `<span class="pill info">SCHEDULED</span>`;
   return `<span class="pill">UNSCHEDULED</span>`;
 }
 
@@ -1159,3 +1163,4 @@ init().catch(e=> alert(e.message || e));
 </body>
 
 </html>
+
