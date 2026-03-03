@@ -1,0 +1,1139 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SJTC Logistics Planning App V1 (GitHub)</title>
+  <style>
+    :root{
+      --bg:#0b1f16;
+      --panel:#0f2a1f;
+      --txt:#f3f1e8;
+      --muted:#c8c1ad;
+      --accent:#7fd3a6;
+      --ok:#35d07f;
+      --bad:#ff6b6b;
+      --warn:#ffd27a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:radial-gradient(1200px 700px at 20% 10%, #123826 0%, var(--bg) 60%);color:var(--txt)}
+    header{position:sticky;top:0;z-index:10;background:rgba(11,31,22,.88);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08);padding:12px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .title{font-weight:900}
+    .badge{font-size:12px;color:var(--muted);padding:4px 8px;border:1px solid rgba(255,255,255,.14);border-radius:999px}
+    .spacer{flex:1}
+    button,select,input,textarea{background:rgba(243,241,232,.08);color:var(--txt);border:1px solid rgba(243,241,232,.18);border-radius:10px;padding:9px 10px;font:inherit;outline:none}
+    button{cursor:pointer}
+    button.primary{background:rgba(127,211,166,.16);border-color:rgba(127,211,166,.45)}
+    button.ok{background:rgba(53,208,127,.14);border-color:rgba(53,208,127,.45)}
+    button.danger{background:rgba(255,107,107,.14);border-color:rgba(255,107,107,.45)}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    main{padding:14px;max-width:1300px;margin:0 auto}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+    .tab{padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(243,241,232,.06);cursor:pointer}
+    .tab.active{border-color:rgba(127,211,166,.7);background:rgba(127,211,166,.15)}
+    .panel{background:rgba(15,42,31,.92);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px}
+    .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+    @media (max-width: 980px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width: 560px){.grid{grid-template-columns:1fr}}
+    .day{border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;background:rgba(243,241,232,.04);min-height:220px;display:flex;flex-direction:column}
+    .dayHead{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.10)}
+    .dayHead .h{font-weight:900;font-size:13px}
+    .dayHead .s{color:var(--muted);font-size:12px;margin-top:2px}
+    .dayBody{padding:10px 12px;display:flex;flex-direction:column;gap:8px;flex:1}
+    .card{border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px;background:rgba(11,31,22,.35);display:flex;flex-direction:column;gap:6px}
+    .line{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .pill{font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:var(--muted)}
+    .pill.ok{border-color:rgba(53,208,127,.55);color:#c7f6dc}
+    .pill.warn{border-color:rgba(255,210,122,.55);color:#ffe8b8}
+    .pill.bad{border-color:rgba(255,107,107,.55);color:#ffc2c2}
+    .pill.info{border-color:rgba(127,211,166,.55);color:#d7ffec}
+    .pill.block{border-color:rgba(255,210,122,.75);color:#ffe8b8}
+    .small{font-size:12px;color:var(--muted)}
+    .twoCol{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media (max-width: 980px){.twoCol{grid-template-columns:1fr}}
+    textarea{width:100%;min-height:72px;resize:vertical}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid rgba(255,255,255,.10);padding:10px 8px;text-align:left;font-size:13px;vertical-align:top}
+    th{color:var(--muted);font-weight:900}
+    .click{cursor:pointer}
+
+    /* Modal always fits */
+    .modalBg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:12px;z-index:50;overflow:auto}
+    .modal{width:min(980px,100%);margin-top:10px;max-height:calc(100dvh - 24px);background:rgba(15,42,31,.98);border:1px solid rgba(255,255,255,.14);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
+    .modalH{position:sticky;top:0;z-index:2;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.10);display:flex;gap:10px;align-items:center;background:rgba(15,42,31,.98)}
+    .modalB{padding:10px 12px;display:grid;gap:8px;overflow:auto}
+    .modalF{position:sticky;bottom:0;z-index:2;padding:10px 12px;border-top:1px solid rgba(255,255,255,.10);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;background:rgba(15,42,31,.98)}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+    .hint{font-size:12px;color:var(--muted)}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(243,241,232,.06);cursor:pointer;font-size:12px;color:var(--muted)}
+    .chip.active{border-color:rgba(127,211,166,.7);background:rgba(127,211,166,.16);color:#d7ffec}
+    .warnBox{border:1px solid rgba(255,210,122,.45);background:rgba(255,210,122,.10);border-radius:14px;padding:10px}
+    .dangerBox{border:1px solid rgba(255,107,107,.45);background:rgba(255,107,107,.10);border-radius:14px;padding:10px}
+    .routeGroup{border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:10px;background:rgba(243,241,232,.04);margin-bottom:10px}
+    .stop{border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px;background:rgba(11,31,22,.35);margin-top:8px}
+    .dragHandle{cursor:grab; user-select:none; padding:4px 8px; border-radius:10px; border:1px solid rgba(255,255,255,.12); color:var(--muted)}
+    .searchBox{min-width:240px}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+  </style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <div class="title">SJTC — Logistics Planning App V1</div>
+    <span class="badge" id="rangeBadge">Loading…</span>
+    <span class="badge" id="modeBadge">Mode: …</span>
+    <div class="spacer"></div>
+
+    <input class="searchBox" id="q" placeholder="Search: SO#, project, client, name, destination..." />
+
+    <select id="statusFilter"></select>
+    <select id="typeFilter"></select>
+    <select id="schedFilter">
+      <option value="SCHEDULED_OR_CONFIRMED" selected>Scheduled + Confirmed</option>
+      <option value="ALL">All (incl unscheduled)</option>
+      <option value="UNSCHEDULED">Unscheduled only</option>
+    </select>
+    <select id="driverFilter"></select>
+    <select id="vehicleFilter"></select>
+
+    <button id="btnPrev">← Prev</button>
+    <button class="primary" id="btnToday">Current 2 weeks</button>
+    <button id="btnNext">Next →</button>
+
+    <button class="primary" id="btnUnlock">Manager Unlock</button>
+    <button class="primary" id="btnNew">+ New Request</button>
+  </div>
+
+  <div class="row" style="margin-top:10px">
+    <div class="chips" id="quickChips"></div>
+    <div class="spacer"></div>
+    <span class="badge" id="blockedBadge" style="display:none"></span>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <div class="tab active" data-tab="calendar">2-week Plan</div>
+    <div class="tab" data-tab="routes">Routes (by Vehicle/Day)</div>
+    <div class="tab" data-tab="inbox">Inbox (Pending)</div>
+    <div class="tab" data-tab="all">All Requests</div>
+  </div>
+
+  <div id="viewCalendar" class="panel"></div>
+  <div id="viewRoutes" class="panel" style="display:none;"></div>
+  <div id="viewInbox" class="panel" style="display:none;"></div>
+  <div id="viewAll" class="panel" style="display:none;"></div>
+</main>
+
+<!-- Modal: Create/Edit -->
+<div class="modalBg" id="modalBg">
+  <div class="modal">
+    <div class="modalH">
+      <div style="font-weight:900" id="modalTitle">New Request</div>
+      <span class="badge mono" id="modalRid"></span>
+      <div class="spacer"></div>
+      <span class="badge" id="modalTypeBadge"></span>
+      <span class="badge" id="modalSchedBadge"></span>
+      <span class="badge" id="modalMineBadge" style="display:none">Mine</span>
+    </div>
+
+    <div class="modalB">
+      <div id="modalWarnings" style="display:none"></div>
+
+      <div class="twoCol">
+        <div>
+          <label>Request Type</label>
+          <select id="fType"></select>
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="fStatus"></select>
+          <div class="hint">Requestors create PENDING. Manager can approve/confirm/cancel.</div>
+        </div>
+
+        <div>
+          <label>Start (Date & Time)</label>
+          <input id="fStart" type="datetime-local" />
+        </div>
+        <div>
+          <label>End (Date & Time)</label>
+          <input id="fEnd" type="datetime-local" />
+          <div class="hint">If blank/too short, minimum is 4 hours.</div>
+        </div>
+
+        <div>
+          <label>Requested By</label>
+          <input id="fRequestedBy" placeholder="Name" />
+        </div>
+        <div>
+          <label>Department</label>
+          <select id="fDept"></select>
+        </div>
+      </div>
+
+      <div class="twoCol">
+        <div>
+          <label>Assign Driver (Manager)</label>
+          <select id="fDriver"></select>
+        </div>
+        <div>
+          <label>Assign Vehicle (Manager)</label>
+          <select id="fVehicle"></select>
+          <div class="hint" id="vehBlockHint"></div>
+        </div>
+      </div>
+
+      <div id="typeFields"></div>
+
+      <div class="twoCol">
+        <div>
+          <label>Decision Note</label>
+          <input id="fDecisionNote" placeholder="e.g., rescheduled / cancelled reason" />
+        </div>
+        <div>
+          <label>Cancel Code (optional fallback)</label>
+          <input id="fCancelCode" placeholder="Only needed if cancelling from a different device" />
+        </div>
+      </div>
+
+      <div class="hint" id="modalHint"></div>
+    </div>
+
+    <div class="modalF">
+      <button id="btnClose">Close</button>
+      <button class="primary" id="btnDuplicate">Duplicate</button>
+      <button class="danger" id="btnCancelReq">Cancel Request</button>
+      <button class="primary" id="btnApprove">Set APPROVED</button>
+      <button class="ok" id="btnConfirm">Set CONFIRMED</button>
+      <button class="ok" id="btnSave">Save / Create</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================
+   CONFIG
+   ========================= */
+// Paste your deployed Apps Script /exec URL here:
+const API_URL = "https://script.google.com/macros/s/AKfycbwKbW0Zd2Q2L1dsfxXtNSo5H7AmU9JhgRtMq-Ndcrqh67LSFE59wl_1NPoaR99ajIHaBw/exec";
+
+/* =========================
+   State
+   ========================= */
+const $ = id => document.getElementById(id);
+
+let BOOT = null;
+let requests = [];
+let offsetWeeks = 0;
+let currentRequest = null;
+let quickFilter = "RESET"; // active chip id
+
+const pad2 = n => String(n).padStart(2,"0");
+const ymd = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+const nice = d => d.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"});
+
+function startOfWeekMonday(date){
+  const d = new Date(date.getFullYear(),date.getMonth(),date.getDate());
+  const day = d.getDay();
+  const diff = (day===0 ? -6 : 1-day);
+  d.setDate(d.getDate()+diff); d.setHours(0,0,0,0); return d;
+}
+const addDays = (d,n)=>{ const x=new Date(d); x.setDate(x.getDate()+n); return x; };
+
+function toLocalInputValue(iso){
+  if(!iso) return "";
+  const d = new Date(iso);
+  const off = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - off*60000);
+  return local.toISOString().slice(0,16);
+}
+function fromLocalInputValue(v){
+  if(!v) return "";
+  const d = new Date(v);
+  return d.toISOString();
+}
+
+function windowDates(){
+  const anchor = startOfWeekMonday(new Date());
+  const start = addDays(anchor, offsetWeeks*7);
+  return Array.from({length:14}, (_,i)=>addDays(start,i));
+}
+function windowStartEndISO(){
+  const dates = windowDates();
+  const start = dates[0];
+  const end = addDays(dates[dates.length-1], 1);
+  return {startISO: start.toISOString(), endISO: end.toISOString(), start, end: addDays(end,-1)};
+}
+
+function escapeHtml(str){
+  return String(str ?? "").replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c]));
+}
+function escapeAttr(str){ return escapeHtml(str).replace(/"/g,"&quot;"); }
+
+/* =========================
+   Identity helpers (no login)
+   - "Mine" = created from this browser
+   ========================= */
+function mineKey_(){ return "SJTC_MINE_REQUEST_IDS"; }
+function getMineSet_(){
+  try{
+    const arr = JSON.parse(localStorage.getItem(mineKey_()) || "[]");
+    return new Set(arr.map(String));
+  }catch(e){ return new Set(); }
+}
+function addMine_(rid){
+  const s = getMineSet_();
+  s.add(String(rid));
+  localStorage.setItem(mineKey_(), JSON.stringify(Array.from(s)));
+}
+function isMine_(rid){
+  return getMineSet_().has(String(rid));
+}
+
+/* =========================
+   Manager PIN
+   ========================= */
+function getPin(){ return localStorage.getItem("SJTC_MANAGER_PIN") || ""; }
+function setPin(pin){ localStorage.setItem("SJTC_MANAGER_PIN", pin); }
+
+/* =========================
+   API wrapper
+   ========================= */
+async function api(action, data = {}) {
+  const res = await fetch(`${API_URL}?action=${encodeURIComponent(action)}`, {
+    method: "POST",
+    headers: {"Content-Type":"text/plain;charset=utf-8"},
+    body: JSON.stringify(data)
+  });
+  const text = await res.text();
+  let json;
+  try{ json = JSON.parse(text); } catch(e){ throw new Error("Bad JSON from API: " + text); }
+  if(!json.ok) throw new Error(json.error || "API error");
+  return json;
+}
+
+/* =========================
+   UI: Filters + Search
+   ========================= */
+function normalize(s){ return String(s||"").toLowerCase(); }
+
+function matchesSearch(r, q){
+  if(!q) return true;
+  const p = r.Payload || {};
+  const hay = [
+    r.RequestID, r.Type, r.Status, r.DriverCode, r.VehicleCode,
+    r.RequestedBy, r.Department, r.DecisionNote,
+    p.ServiceOrderNumber, p.ProjectName, p.ClientName, p.DeliveryAddress,
+    p.Name, p.Destinations, p.Purpose, p.Address, p.Description,
+    p.ItemsToDeliver, p.SpecialInstructions
+  ].map(normalize).join(" | ");
+  return hay.includes(q);
+}
+
+function applyQuickFilter(list){
+  const now = new Date();
+  if(quickFilter==="PENDING") return list.filter(r=>r.Status==="PENDING");
+  if(quickFilter==="UNSCHEDULED") return list.filter(r=>!r.Scheduled && r.Status!=="CANCELLED");
+  if(quickFilter==="SCHEDULED") return list.filter(r=>r.Scheduled && r.Status!=="CANCELLED");
+  if(quickFilter==="CONFIRMED") return list.filter(r=>r.Status==="CONFIRMED");
+  if(quickFilter==="CANCELLED") return list.filter(r=>r.Status==="CANCELLED");
+  if(quickFilter==="TODAY_CONFIRMED"){
+    const tk = ymd(now);
+    return list.filter(r=>r.Status==="CONFIRMED" && r.StartDT.slice(0,10)===tk);
+  }
+  return list; // RESET
+}
+
+function applyFilters(list){
+  const st = $("statusFilter").value;
+  const ty = $("typeFilter").value;
+  const dr = $("driverFilter").value;
+  const ve = $("vehicleFilter").value;
+  const sf = $("schedFilter").value;
+  const q = normalize($("q").value.trim());
+
+  let out = list.slice();
+  out = applyQuickFilter(out);
+
+  out = out.filter(r=>{
+    if(st!=="ALL" && r.Status!==st) return false;
+    if(ty!=="ALL" && r.Type!==ty) return false;
+    if(dr!=="ALL" && r.DriverCode!==dr) return false;
+    if(ve!=="ALL" && r.VehicleCode!==ve) return false;
+
+    if(sf==="SCHEDULED_OR_CONFIRMED"){
+      if(!(r.Scheduled || r.Status==="CONFIRMED")) return false;
+    } else if (sf==="UNSCHEDULED"){
+      if(r.Scheduled) return false;
+      if(r.Status==="CANCELLED") return false;
+    }
+    if(!matchesSearch(r,q)) return false;
+    return true;
+  });
+
+  return out;
+}
+
+/* =========================
+   Badges
+   ========================= */
+function pillForStatus(s){
+  if(s==="CONFIRMED") return `<span class="pill ok">CONFIRMED</span>`;
+  if(s==="APPROVED") return `<span class="pill warn">APPROVED</span>`;
+  if(s==="PENDING") return `<span class="pill">PENDING</span>`;
+  return `<span class="pill bad">CANCELLED</span>`;
+}
+function pillForScheduled(r){
+  if(r.Status==="CANCELLED") return `<span class="pill bad">CANCELLED</span>`;
+  if(r.Scheduled) return `<span class="pill info">SCHEDULED</span>`;
+  return `<span class="pill">UNSCHEDULED</span>`;
+}
+
+/* =========================
+   Rendering helpers
+   ========================= */
+function requestTitle(r){
+  const p = r.Payload || {};
+  if(r.Type==="Delivery") return `${p.ServiceOrderNumber || "SO ?"} • ${p.ProjectName || "Project"}`;
+  if(r.Type==="Travel") return `${p.Name || "Travel"} • ${p.Purpose || ""}`;
+  return `${p.Name || "Service"} • ${p.Purpose || ""}`;
+}
+function requestSubtitle(r){
+  const p = r.Payload || {};
+  if(r.Type==="Delivery") return `${p.ClientName || ""} • ${p.DeliveryAddress || ""}`;
+  if(r.Type==="Travel") return `${p.Destinations || ""}`;
+  return `${p.Address || ""}`;
+}
+
+function cardHTML(r){
+  const start = new Date(r.StartDT);
+  const end = new Date(r.EndDT);
+  const mine = isMine_(r.RequestID);
+  return `
+    <div class="card click" data-open="${escapeAttr(r.RequestID)}">
+      <div class="line" style="justify-content:space-between">
+        <div style="font-weight:900">${escapeHtml(requestTitle(r))}</div>
+        <div class="line">
+          ${mine ? `<span class="pill info">MINE</span>` : ``}
+          ${pillForScheduled(r)}
+          ${pillForStatus(r.Status)}
+        </div>
+      </div>
+      <div class="small">${escapeHtml(requestSubtitle(r))}</div>
+      <div class="line">
+        <span class="pill">${escapeHtml(r.Type)}</span>
+        <span class="pill">🕒 ${start.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"})}–${end.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"})}</span>
+        <span class="pill">👤 ${escapeHtml(r.DriverCode || "—")}</span>
+        <span class="pill">🚚 ${escapeHtml(r.VehicleCode || "—")}</span>
+        ${r.RouteSeq ? `<span class="pill info">Stop #${r.RouteSeq}</span>` : ``}
+      </div>
+    </div>
+  `;
+}
+
+function tableHTML(list){
+  if(!list.length) return `<div class="hint">No records.</div>`;
+  const rows = list.map(r=>{
+    const start = new Date(r.StartDT);
+    return `
+      <tr class="click" data-open="${escapeAttr(r.RequestID)}">
+        <td><b class="mono">${escapeHtml(r.RequestID)}</b><div class="small">${pillForScheduled(r)} ${pillForStatus(r.Status)} ${isMine_(r.RequestID)?`<span class="pill info">MINE</span>`:""}</div></td>
+        <td>${escapeHtml(r.Type)}</td>
+        <td>${start.toLocaleString()}</td>
+        <td>${escapeHtml(r.DriverCode||"")}</td>
+        <td>${escapeHtml(r.VehicleCode||"")}</td>
+        <td class="small">${escapeHtml((r.Payload && (r.Payload.SpecialInstructions || r.Payload.Description || "")) || "")}</td>
+      </tr>
+    `;
+  }).join("");
+  return `
+    <table>
+      <thead><tr><th>ID</th><th>Type</th><th>Start</th><th>Driver</th><th>Vehicle</th><th>Notes</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+/* =========================
+   Render Views
+   ========================= */
+function renderAll(){
+  $("modeBadge").textContent = `Mode: ${BOOT.canManage ? "Manager" : "Requestor"}`;
+
+  // Blocked vehicles badge for today (manager)
+  if(BOOT.canManage){
+    const today = ymd(new Date());
+    const blockedToday = (BOOT.vehicleBlocks || []).filter(b => b.Date===today).map(b => b.VehicleCode);
+    if(blockedToday.length){
+      $("blockedBadge").style.display = "";
+      $("blockedBadge").textContent = `Blocked vehicles today: ${blockedToday.join(", ")}`;
+    } else {
+      $("blockedBadge").style.display = "none";
+    }
+  } else {
+    $("blockedBadge").style.display = "none";
+  }
+
+  renderCalendar();
+  renderRoutes();
+  renderInbox();
+  renderAllRequests();
+}
+
+function renderCalendar(){
+  const wrap = $("viewCalendar");
+  const dates = windowDates();
+  const byDay = {};
+  for(const d of dates) byDay[ymd(d)] = [];
+
+  const filtered = applyFilters(requests);
+  for(const r of filtered){
+    const dayKey = r.StartDT.slice(0,10);
+    if(byDay[dayKey]) byDay[dayKey].push(r);
+  }
+
+  wrap.innerHTML = `<div class="grid" id="calGrid"></div>`;
+  const g = $("calGrid");
+  const todayKey = ymd(new Date());
+
+  for(const d of dates){
+    const key = ymd(d);
+    const items = (byDay[key]||[]).slice().sort((a,b)=>{
+      const as = a.RouteSeq ?? 999999;
+      const bs = b.RouteSeq ?? 999999;
+      if(a.VehicleCode && b.VehicleCode && a.VehicleCode===b.VehicleCode && as!==bs) return as-bs;
+      return new Date(a.StartDT)-new Date(b.StartDT);
+    });
+
+    const day = document.createElement("div");
+    day.className = "day";
+    day.innerHTML = `
+      <div class="dayHead">
+        <div class="h">${d.toLocaleDateString(undefined,{weekday:"long"})}${key===todayKey ? " • Today" : ""}</div>
+        <div class="s">${d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})}</div>
+      </div>
+      <div class="dayBody" id="day-${key}"></div>
+    `;
+    g.appendChild(day);
+
+    const body = day.querySelector(`#day-${CSS.escape(key)}`);
+    if(!items.length) body.innerHTML = `<div class="hint">No requests.</div>`;
+    else items.forEach(r=> body.insertAdjacentHTML("beforeend", cardHTML(r)));
+  }
+
+  wrap.querySelectorAll("[data-open]").forEach(el=>{
+    el.addEventListener("click", ()=> openModal(el.dataset.open));
+  });
+}
+
+function renderInbox(){
+  const wrap = $("viewInbox");
+  const pending = requests.filter(r=>r.Status==="PENDING");
+  wrap.innerHTML = `
+    <div class="line" style="justify-content:space-between;margin-bottom:10px">
+      <div style="font-weight:900">Pending Requests</div>
+      <div class="hint">${BOOT.canManage ? "Manager: click to schedule/approve/confirm/cancel." : "Requestor: read-only."}</div>
+    </div>
+    ${tableHTML(pending)}
+  `;
+  wrap.querySelectorAll("[data-open]").forEach(el=> el.addEventListener("click", ()=> openModal(el.dataset.open)));
+}
+
+function renderAllRequests(){
+  const wrap = $("viewAll");
+  const list = applyFilters(requests).slice().sort((a,b)=> new Date(b.CreatedAt||0) - new Date(a.CreatedAt||0));
+  wrap.innerHTML = `
+    <div class="line" style="justify-content:space-between;margin-bottom:10px">
+      <div style="font-weight:900">All Requests (window)</div>
+      <div class="hint">Search + filters apply.</div>
+    </div>
+    ${tableHTML(list)}
+  `;
+  wrap.querySelectorAll("[data-open]").forEach(el=> el.addEventListener("click", ()=> openModal(el.dataset.open)));
+}
+
+/* =========================
+   Routes View (group by day+vehicle, drag reorder)
+   ========================= */
+function renderRoutes(){
+  const wrap = $("viewRoutes");
+  const filtered = applyFilters(requests).filter(r => r.Scheduled && r.Status!=="CANCELLED");
+
+  // group: dateKey|vehicle
+  const groups = {};
+  for(const r of filtered){
+    const dateKey = r.StartDT.slice(0,10);
+    const veh = r.VehicleCode || "";
+    const key = `${dateKey}|${veh}`;
+    if(!groups[key]) groups[key] = { dateKey, vehicleCode: veh, items: [] };
+    groups[key].items.push(r);
+  }
+
+  const keys = Object.keys(groups).sort((a,b)=>a.localeCompare(b));
+  if(!keys.length){
+    wrap.innerHTML = `<div class="hint">No scheduled routes in this window.</div>`;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div class="line" style="justify-content:space-between;margin-bottom:10px">
+      <div style="font-weight:900">Routes (Day + Vehicle)</div>
+      <div class="hint">${BOOT.canManage ? "Drag stops to reorder, then Save route." : "Read-only (manager saves ordering)."}</div>
+    </div>
+    <div id="routesWrap"></div>
+  `;
+
+  const container = wrap.querySelector("#routesWrap");
+
+  for(const k of keys){
+    const g = groups[k];
+    g.items.sort((a,b)=>{
+      const as = a.RouteSeq ?? 999999;
+      const bs = b.RouteSeq ?? 999999;
+      if(as!==bs) return as-bs;
+      return new Date(a.StartDT)-new Date(b.StartDT);
+    });
+
+    const vehicleLabel = (BOOT.vehicles.find(v=>v.VehicleCode===g.vehicleCode) || {}).VehicleLabel || "";
+    container.insertAdjacentHTML("beforeend", `
+      <div class="routeGroup">
+        <div class="line" style="justify-content:space-between">
+          <div style="font-weight:900">${escapeHtml(g.dateKey)} • Vehicle: ${escapeHtml(g.vehicleCode)} ${vehicleLabel? "— "+escapeHtml(vehicleLabel):""}</div>
+          <button class="ok" data-save-route="${escapeAttr(k)}" ${BOOT.canManage?"":"disabled"}>Save route</button>
+        </div>
+        <div class="hint">Stops: ${g.items.length} • Drag using the handle.</div>
+        <div class="stops" data-stops="${escapeAttr(k)}"></div>
+      </div>
+    `);
+
+    const stopsDiv = container.querySelector(`[data-stops="${CSS.escape(k)}"]`);
+    g.items.forEach(r=>{
+      stopsDiv.insertAdjacentHTML("beforeend", `
+        <div class="stop" draggable="${BOOT.canManage ? "true":"false"}" data-rid="${escapeAttr(r.RequestID)}">
+          <div class="line" style="justify-content:space-between">
+            <div class="line">
+              <span class="dragHandle">↕</span>
+              <b class="mono">${escapeHtml(r.RequestID)}</b>
+              ${r.RouteSeq ? `<span class="pill info">#${r.RouteSeq}</span>`:""}
+              ${pillForStatus(r.Status)}
+            </div>
+            <button class="primary" data-open="${escapeAttr(r.RequestID)}">Open</button>
+          </div>
+          <div class="small">${escapeHtml(r.Type)} • ${escapeHtml(requestTitle(r))}</div>
+          <div class="small">${escapeHtml(requestSubtitle(r))}</div>
+        </div>
+      `);
+    });
+
+    if(BOOT.canManage){
+      enableDragDropForGroup(stopsDiv);
+    }
+  }
+
+  wrap.querySelectorAll("[data-open]").forEach(el=> el.addEventListener("click", ()=> openModal(el.dataset.open)));
+
+  wrap.querySelectorAll("[data-save-route]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const key = btn.dataset.saveRoute;
+      const [routeDate, vehicleCode] = key.split("|");
+      const stopsDiv = wrap.querySelector(`[data-stops="${CSS.escape(key)}"]`);
+      const ids = Array.from(stopsDiv.querySelectorAll("[data-rid]")).map(x=>x.dataset.rid);
+
+      await api("setRouteOrder", { pin:getPin(), routeDate, vehicleCode, requestIds: ids });
+      await loadWindow();
+      alert("Route saved.");
+    });
+  });
+}
+
+function enableDragDropForGroup(container){
+  let dragEl = null;
+  container.querySelectorAll(".stop").forEach(el=>{
+    el.addEventListener("dragstart", (e)=>{ dragEl = el; e.dataTransfer.effectAllowed="move"; });
+    el.addEventListener("dragover", (e)=>{ e.preventDefault(); e.dataTransfer.dropEffect="move"; });
+    el.addEventListener("drop", (e)=>{
+      e.preventDefault();
+      if(!dragEl || dragEl===el) return;
+      const rect = el.getBoundingClientRect();
+      const after = (e.clientY - rect.top) > rect.height/2;
+      if(after) el.after(dragEl); else el.before(dragEl);
+    });
+    el.addEventListener("dragend", ()=>{ dragEl = null; });
+  });
+}
+
+/* =========================
+   Modal: open/close + form
+   ========================= */
+function buildTypeFields(type, payload){
+  const wrap = $("typeFields");
+  payload = payload || {};
+
+  if(type==="Delivery"){
+    wrap.innerHTML = `
+      <div class="twoCol">
+        <div><label>Service Order Number</label><input id="pSO" value="${escapeAttr(payload.ServiceOrderNumber||"")}" /></div>
+        <div><label>Project Name</label><input id="pProject" value="${escapeAttr(payload.ProjectName||"")}" /></div>
+        <div><label>Client Name</label><input id="pClient" value="${escapeAttr(payload.ClientName||"")}" /></div>
+        <div><label>Contact Number</label><input id="pContact" value="${escapeAttr(payload.ContactNumber||"")}" /></div>
+      </div>
+      <div><label>Delivery Address</label><input id="pAddr" value="${escapeAttr(payload.DeliveryAddress||"")}" /></div>
+      <div><label>Items to Deliver</label><textarea id="pItems">${escapeHtml(payload.ItemsToDeliver||"")}</textarea></div>
+      <div><label>Special Instructions</label><textarea id="pSpec">${escapeHtml(payload.SpecialInstructions||"")}</textarea></div>
+    `;
+    return;
+  }
+
+  if(type==="Travel"){
+    wrap.innerHTML = `
+      <div class="twoCol">
+        <div><label>Name</label><input id="pName" value="${escapeAttr(payload.Name||"")}" /></div>
+        <div><label>Destination/s</label><input id="pDest" value="${escapeAttr(payload.Destinations||"")}" /></div>
+        <div><label>Purpose</label><input id="pPurpose" value="${escapeAttr(payload.Purpose||"")}" /></div>
+        <div><label>Special Instructions</label><input id="pSpec1" value="${escapeAttr(payload.SpecialInstructions||"")}" /></div>
+      </div>
+    `;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div class="twoCol">
+      <div><label>Name</label><input id="pNameS" value="${escapeAttr(payload.Name||"")}" /></div>
+      <div><label>Address</label><input id="pAddrS" value="${escapeAttr(payload.Address||"")}" /></div>
+      <div><label>Purpose</label>
+        <select id="pPurposeS">
+          ${["Purchasing","Item Pick-Up","Site Installation/Servicing"].map(x=>`<option ${payload.Purpose===x?"selected":""}>${x}</option>`).join("")}
+        </select>
+      </div>
+      <div><label>Special Instructions</label><input id="pSpecS" value="${escapeAttr(payload.SpecialInstructions||"")}" /></div>
+    </div>
+    <div><label>Description of Request</label><textarea id="pDescS">${escapeHtml(payload.Description||"")}</textarea></div>
+  `;
+}
+
+function val(id){ const el=$(id); return el ? el.value.trim() : ""; }
+
+function gatherPayload(type){
+  if(type==="Delivery"){
+    return {
+      ServiceOrderNumber: val("pSO"),
+      ProjectName: val("pProject"),
+      ClientName: val("pClient"),
+      DeliveryAddress: val("pAddr"),
+      ContactNumber: val("pContact"),
+      ItemsToDeliver: val("pItems"),
+      SpecialInstructions: val("pSpec"),
+    };
+  }
+  if(type==="Travel"){
+    return {
+      Name: val("pName"),
+      Destinations: val("pDest"),
+      Purpose: val("pPurpose"),
+      SpecialInstructions: val("pSpec1"),
+    };
+  }
+  return {
+    Name: val("pNameS"),
+    Address: val("pAddrS"),
+    Purpose: $("pPurposeS") ? $("pPurposeS").value : "",
+    Description: val("pDescS"),
+    SpecialInstructions: val("pSpecS"),
+  };
+}
+
+function validateRequired(type, payload){
+  const errs = [];
+  if(!type) errs.push("Type is required.");
+  if(!val("fStart")) errs.push("Start date/time is required.");
+
+  if(type==="Delivery"){
+    if(!payload.ServiceOrderNumber) errs.push("Delivery: Service Order Number is required.");
+    if(!payload.ProjectName) errs.push("Delivery: Project Name is required.");
+    if(!payload.DeliveryAddress) errs.push("Delivery: Delivery Address is required.");
+    if(!payload.ItemsToDeliver) errs.push("Delivery: Items to Deliver is required.");
+  }
+  if(type==="Travel"){
+    if(!payload.Name) errs.push("Travel: Name is required.");
+    if(!payload.Destinations) errs.push("Travel: Destination/s is required.");
+    if(!payload.Purpose) errs.push("Travel: Purpose is required.");
+  }
+  if(type==="Service"){
+    if(!payload.Name) errs.push("Service: Name is required.");
+    if(!payload.Address) errs.push("Service: Address is required.");
+    if(!payload.Purpose) errs.push("Service: Purpose is required.");
+    if(!payload.Description) errs.push("Service: Description is required.");
+  }
+  return errs;
+}
+
+function vehicleBlockedOnDate(vehicleCode, dateKey){
+  return (BOOT.vehicleBlocks || []).some(b => b.VehicleCode===vehicleCode && b.Date===dateKey);
+}
+
+function populateVehicleOptions(dateKey){
+  // Manager selection: exclude blocked vehicles for that date
+  const vehicles = (BOOT.vehicles || []).filter(v => String(v.Active||"Y").toUpperCase() !== "N");
+  const options = [`<option value="">(Unassigned)</option>`];
+
+  vehicles.forEach(v=>{
+    const blocked = dateKey ? vehicleBlockedOnDate(v.VehicleCode, dateKey) : false;
+    const disabled = blocked ? "disabled" : "";
+    const tag = blocked ? " (BLOCKED)" : "";
+    options.push(`<option value="${escapeAttr(v.VehicleCode)}" ${disabled}>${escapeHtml(v.VehicleCode)} — ${escapeHtml(v.VehicleLabel||"")}${tag}</option>`);
+  });
+
+  $("fVehicle").innerHTML = options.join("");
+
+  if(dateKey){
+    const blocked = (BOOT.vehicleBlocks || []).filter(b => b.Date===dateKey).map(b=>b.VehicleCode);
+    $("vehBlockHint").textContent = blocked.length ? `Blocked today: ${blocked.join(", ")}` : "";
+  } else {
+    $("vehBlockHint").textContent = "";
+  }
+}
+
+function openModal(requestId){
+  currentRequest = requestId ? (requests.find(r=>r.RequestID===requestId) || null) : null;
+
+  $("modalBg").style.display = "flex";
+  $("modalWarnings").style.display = "none";
+  $("modalWarnings").innerHTML = "";
+
+  $("modalTitle").textContent = currentRequest ? "Request Details" : "New Request";
+  $("modalRid").textContent = currentRequest ? currentRequest.RequestID : "";
+  $("modalTypeBadge").textContent = currentRequest ? currentRequest.Type : "";
+  $("modalSchedBadge").textContent = currentRequest ? (currentRequest.Scheduled ? "SCHEDULED" : "UNSCHEDULED") : "";
+
+  const isManager = !!BOOT.canManage;
+  const mine = currentRequest ? isMine_(currentRequest.RequestID) : true;
+
+  $("modalMineBadge").style.display = (currentRequest && mine) ? "" : "none";
+
+  // permissions
+  $("btnApprove").disabled = !isManager;
+  $("btnConfirm").disabled = !isManager;
+  $("fDriver").disabled = !isManager;
+  $("fVehicle").disabled = !isManager;
+  $("fStatus").disabled = !isManager;
+
+  // duplicate only if viewing existing
+  $("btnDuplicate").disabled = !currentRequest;
+
+  // requestor cancel enabled only for mine OR with cancel code fallback
+  $("btnCancelReq").disabled = (!isManager && !mine);
+
+  if(!currentRequest){
+    const now = new Date();
+    $("fType").value = "Delivery";
+    $("fStatus").value = "PENDING";
+    $("fStart").value = toLocalInputValue(now.toISOString());
+    $("fEnd").value = "";
+    $("fRequestedBy").value = "";
+    $("fDept").value = "Production";
+    $("fDriver").value = "";
+    populateVehicleOptions(ymd(now));
+    $("fVehicle").value = "";
+    $("fDecisionNote").value = "";
+    $("fCancelCode").value = "";
+    buildTypeFields("Delivery", {});
+    $("modalHint").textContent = "Submit creates a PENDING request. After creation, you’ll be shown a Cancel Code (save it as backup).";
+    return;
+  }
+
+  $("fType").value = currentRequest.Type;
+  $("fStatus").value = currentRequest.Status;
+  $("fStart").value = toLocalInputValue(currentRequest.StartDT);
+  $("fEnd").value = toLocalInputValue(currentRequest.EndDT);
+  $("fRequestedBy").value = currentRequest.RequestedBy || "";
+  $("fDept").value = currentRequest.Department || "Production";
+  $("fDriver").value = currentRequest.DriverCode || "";
+
+  const dateKey = currentRequest.StartDT.slice(0,10);
+  populateVehicleOptions(dateKey);
+  $("fVehicle").value = currentRequest.VehicleCode || "";
+
+  $("fDecisionNote").value = currentRequest.DecisionNote || "";
+  $("fCancelCode").value = "";
+
+  buildTypeFields(currentRequest.Type, currentRequest.Payload || {});
+  $("modalHint").textContent = isManager
+    ? "Manager: assign driver+vehicle (Scheduled), check conflict warnings, then approve/confirm/cancel."
+    : (mine ? "Requestor: you can cancel this request from this device." : "Requestor: you can only cancel if it is yours (same device) or by using the Cancel Code.");
+}
+
+function closeModal(){
+  $("modalBg").style.display = "none";
+  currentRequest = null;
+}
+
+$("btnClose").addEventListener("click", closeModal);
+$("modalBg").addEventListener("click", e=>{ if(e.target===$("modalBg")) closeModal(); });
+
+$("fType").addEventListener("change", ()=> buildTypeFields($("fType").value, {}));
+$("fStart").addEventListener("change", ()=>{
+  const dt = $("fStart").value;
+  const dateKey = dt ? dt.slice(0,10) : "";
+  populateVehicleOptions(dateKey);
+});
+
+/* =========================
+   Actions: Create/Save, Status, Cancel, Duplicate
+   ========================= */
+function showWarnings(warnings){
+  if(!warnings || !warnings.length){
+    $("modalWarnings").style.display = "none";
+    $("modalWarnings").innerHTML = "";
+    return;
+  }
+  const items = warnings.map(w=>`<li>${escapeHtml(w)}</li>`).join("");
+  $("modalWarnings").style.display = "";
+  $("modalWarnings").innerHTML = `
+    <div class="warnBox">
+      <div style="font-weight:900;margin-bottom:6px">Scheduling Warnings</div>
+      <ul style="margin:0 0 0 18px;padding:0">${items}</ul>
+      <div class="hint" style="margin-top:6px">These are warnings only (not blocking), except blocked vehicles which are blocked.</div>
+    </div>
+  `;
+}
+
+$("btnSave").addEventListener("click", async ()=>{
+  const Type = $("fType").value;
+  const StartDT = fromLocalInputValue($("fStart").value);
+  const EndDT = fromLocalInputValue($("fEnd").value);
+  const RequestedBy = $("fRequestedBy").value.trim();
+  const Department = $("fDept").value;
+  const DriverCode = $("fDriver").value;
+  const VehicleCode = $("fVehicle").value;
+  const Status = $("fStatus").value;
+  const DecisionNote = $("fDecisionNote").value.trim();
+  const Payload = gatherPayload(Type);
+
+  const errs = validateRequired(Type, Payload);
+  if(errs.length) return alert(errs.join("\n"));
+
+  // Create new
+  if(!currentRequest){
+    const res = await api("createRequest", { Type, StartDT, EndDT, RequestedBy, Department, Payload });
+    addMine_(res.requestId);
+    alert(`Created: ${res.requestId}\nCANCEL CODE (backup): ${res.cancelCode}\n\nSave the code if you might cancel from another device.`);
+    closeModal();
+    await loadWindow();
+    return;
+  }
+
+  // Existing: manager-only edits
+  if(!BOOT.canManage){
+    alert("Requestors cannot edit existing requests (except cancel for their own).");
+    return;
+  }
+
+  // update allocation (scheduled)
+  const alloc = await api("updateAllocation", { pin:getPin(), requestId: currentRequest.RequestID, DriverCode, VehicleCode });
+  showWarnings(alloc.warnings || []);
+
+  // update status if changed
+  if(currentRequest.Status !== Status){
+    await api("setStatus", { pin:getPin(), requestId: currentRequest.RequestID, status: Status, note: DecisionNote });
+  }
+
+  closeModal();
+  await loadWindow();
+});
+
+$("btnApprove").addEventListener("click", async ()=>{
+  if(!currentRequest) return;
+  await api("setStatus", { pin:getPin(), requestId: currentRequest.RequestID, status:"APPROVED", note:$("fDecisionNote").value.trim() });
+  closeModal(); await loadWindow();
+});
+$("btnConfirm").addEventListener("click", async ()=>{
+  if(!currentRequest) return;
+  await api("setStatus", { pin:getPin(), requestId: currentRequest.RequestID, status:"CONFIRMED", note:$("fDecisionNote").value.trim() });
+  closeModal(); await loadWindow();
+});
+
+$("btnCancelReq").addEventListener("click", async ()=>{
+  if(!currentRequest) return alert("Create the request first.");
+  const note = $("fDecisionNote").value.trim();
+
+  if(BOOT.canManage){
+    await api("setStatus", { pin:getPin(), requestId: currentRequest.RequestID, status:"CANCELLED", note: note || "Cancelled by manager" });
+    closeModal(); await loadWindow();
+    return;
+  }
+
+  // Requestor: mine-only without code; fallback requires cancel code
+  if(isMine_(currentRequest.RequestID)){
+    // If user enters cancel code, use it; else allow local cancel (we'll still require cancel code on backend)
+    // We made backend require cancelCode, so we generate a workaround:
+    // We ask for cancel code if not provided, because backend can't identify "mine".
+    // UX: make code optional but strongly recommended. If blank, we ask for it now.
+    let code = $("fCancelCode").value.trim();
+    if(!code){
+      code = prompt("Enter the Cancel Code (backup code shown at creation). If you don’t have it, ask the manager to cancel.");
+      if(code===null) return;
+      code = code.trim();
+    }
+    if(!code) return alert("Cancel code required to cancel.");
+    await api("cancelRequest", { requestId: currentRequest.RequestID, cancelCode: code, note: note || "Cancelled by requestor" });
+    closeModal(); await loadWindow();
+    return;
+  }
+
+  alert("You can only cancel your own requests. If this is yours but from another device, enter the Cancel Code. Otherwise ask the manager.");
+});
+
+$("btnDuplicate").addEventListener("click", ()=>{
+  if(!currentRequest) return;
+  // Turn existing request into "new" by clearing RequestID + reset status to PENDING
+  const src = currentRequest;
+  currentRequest = null;
+
+  $("modalTitle").textContent = "Duplicate Request (New)";
+  $("modalRid").textContent = "";
+  $("modalTypeBadge").textContent = "";
+  $("modalSchedBadge").textContent = "";
+  $("modalMineBadge").style.display = "none";
+
+  // Set values based on src but reset
+  $("fType").value = src.Type;
+  $("fStatus").value = "PENDING";
+
+  $("fStart").value = toLocalInputValue(src.StartDT);
+  $("fEnd").value = toLocalInputValue(src.EndDT);
+  $("fRequestedBy").value = src.RequestedBy || "";
+  $("fDept").value = src.Department || "Production";
+
+  // Allow choosing different driver/vehicle; start blank by default
+  $("fDriver").value = "";
+  populateVehicleOptions(src.StartDT.slice(0,10));
+  $("fVehicle").value = "";
+
+  $("fDecisionNote").value = "";
+  $("fCancelCode").value = "";
+
+  buildTypeFields(src.Type, src.Payload || {});
+  $("modalHint").textContent = "This will create a new PENDING request (new RequestID). Assign a different driver/vehicle if needed.";
+});
+
+/* =========================
+   Header: quick chips
+   ========================= */
+function buildQuickChips(){
+  const chips = [
+    {id:"RESET", label:"Reset"},
+    {id:"PENDING", label:"Pending"},
+    {id:"UNSCHEDULED", label:"Unscheduled"},
+    {id:"SCHEDULED", label:"Scheduled"},
+    {id:"CONFIRMED", label:"Confirmed"},
+    {id:"CANCELLED", label:"Cancelled"},
+    {id:"TODAY_CONFIRMED", label:"Confirmed Today"},
+  ];
+  $("quickChips").innerHTML = chips.map(c=>`
+    <div class="chip ${c.id===quickFilter?"active":""}" data-chip="${c.id}">${escapeHtml(c.label)}</div>
+  `).join("");
+
+  $("quickChips").querySelectorAll("[data-chip]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      quickFilter = el.dataset.chip;
+      buildQuickChips();
+      renderAll();
+    });
+  });
+}
+
+/* =========================
+   Bootstrap + Load
+   ========================= */
+async function init(){
+  const pin = getPin();
+  BOOT = await api("bootstrap", { pin });
+
+  // Build filters
+  $("statusFilter").innerHTML = `<option value="ALL">All Status</option>` + BOOT.statuses.map(s=>`<option>${s}</option>`).join("");
+  $("typeFilter").innerHTML = `<option value="ALL">All Types</option>` + BOOT.types.map(t=>`<option>${t}</option>`).join("");
+
+  $("driverFilter").innerHTML = `<option value="ALL">All Drivers</option>` + BOOT.drivers.map(d=>`<option value="${escapeAttr(d.DriverCode)}">${escapeHtml(d.DriverCode)} — ${escapeHtml(d.DriverName)}</option>`).join("");
+  $("vehicleFilter").innerHTML = `<option value="ALL">All Vehicles</option>` + BOOT.vehicles.map(v=>`<option value="${escapeAttr(v.VehicleCode)}">${escapeHtml(v.VehicleCode)} — ${escapeHtml(v.VehicleLabel||"")}</option>`).join("");
+
+  // Form dropdowns
+  $("fType").innerHTML = BOOT.types.map(t=>`<option>${escapeHtml(t)}</option>`).join("");
+  $("fStatus").innerHTML = BOOT.statuses.map(s=>`<option>${escapeHtml(s)}</option>`).join("");
+  $("fDept").innerHTML = BOOT.departments.map(d=>`<option>${escapeHtml(d)}</option>`).join("");
+  $("fDriver").innerHTML = `<option value="">(Unassigned)</option>` + BOOT.drivers.filter(d=>String(d.Active||"Y").toUpperCase()!=="N")
+    .map(d=>`<option value="${escapeAttr(d.DriverCode)}">${escapeHtml(d.DriverCode)} — ${escapeHtml(d.DriverName)}</option>`).join("");
+
+  populateVehicleOptions(ymd(new Date()));
+
+  buildQuickChips();
+
+  await loadWindow();
+}
+
+async function loadWindow(){
+  const w = windowStartEndISO();
+  $("rangeBadge").textContent = `${nice(w.start)} → ${nice(w.end)}`;
+
+  const res = await api("listRequests", { startISO: w.startISO, endISO: w.endISO });
+  requests = res.rows || [];
+  renderAll();
+}
+
+/* =========================
+   Events
+   ========================= */
+// Tabs
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    const tab = t.dataset.tab;
+    $("viewCalendar").style.display = tab==="calendar" ? "" : "none";
+    $("viewRoutes").style.display = tab==="routes" ? "" : "none";
+    $("viewInbox").style.display = tab==="inbox" ? "" : "none";
+    $("viewAll").style.display = tab==="all" ? "" : "none";
+  });
+});
+
+// Window nav
+$("btnPrev").addEventListener("click", async ()=>{ offsetWeeks -= 2; await loadWindow(); });
+$("btnNext").addEventListener("click", async ()=>{ offsetWeeks += 2; await loadWindow(); });
+$("btnToday").addEventListener("click", async ()=>{ offsetWeeks = 0; await loadWindow(); });
+
+// Filters/search
+["statusFilter","typeFilter","schedFilter","driverFilter","vehicleFilter"].forEach(id=> $(id).addEventListener("change", renderAll));
+$("q").addEventListener("input", renderAll);
+
+// New request
+$("btnNew").addEventListener("click", ()=> openModal(null));
+
+// Manager unlock
+$("btnUnlock").addEventListener("click", async ()=>{
+  const pin = prompt("Enter Manager PIN:");
+  if(pin===null) return;
+  setPin(pin.trim());
+  await init();
+  alert(BOOT.canManage ? "Manager mode enabled." : "Wrong PIN. Staying requestor mode.");
+});
+
+// Open modal from cards/tables/routes
+function bindOpenHandlers(){
+  document.querySelectorAll("[data-open]").forEach(el=>{
+    el.addEventListener("click", ()=> openModal(el.dataset.open));
+  });
+}
+
+// Rebind after each render
+const _renderAll = renderAll;
+renderAll = function(){
+  _renderAll();
+  bindOpenHandlers();
+};
+
+init().catch(e=> alert(e.message || e));
+
+</script>
+</body>
+</html>
